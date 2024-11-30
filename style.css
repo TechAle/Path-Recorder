@@ -101,8 +101,10 @@ button:focus-visible {
   padding-bottom: 10px;
 }
 .item > img {
-  width: 64px;
-  margin-right: 10px;
+  max-width: 64px;  /* Constrain the maximum width */
+  max-height: 64px; /* Constrain the maximum height */
+  width: auto;      /* Maintain original width */
+  height: auto;     /* Maintain original height */
 }
 .coordinate > input {
   width: auto;
