@@ -1,6 +1,7 @@
-# Tutorial - Initiative Tracker
+# Path recorder
 
-Final code from the tutorial found [here](https://docs.owlbear.rodeo/extensions/tutorial-initiative-tracker/).
+This extensions allow you to record paths and let characters automatically follow them.<br>
+It's still work-in-progress, expect bugs using it
 
 ## Links svg
 - Mouse: [link](https://www.svgrepo.com/svg/533142/mouse-alt-2)
