@@ -162,3 +162,9 @@ button:focus-visible {
   width: 40%; /* Each button occupies 40% of the container's width */
   box-sizing: border-box; /* Include padding/border in the width calculation */
 }
+
+.mouse {
+  width: 10px;
+  filter: invert(1);
+  cursor: pointer;
+}

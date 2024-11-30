@@ -117,6 +117,38 @@ export const renderList = async (items) => {
         divY.classList.add("cell");
         coordDiv.appendChild(divY);
         const space = document.createElement('div');
+        const image = document.createElement('img');
+        image.src = "./public/mouse.svg"
+        image.classList.add("mouse")
+        // Add click listener to the image
+        image.onclick = async () => {;
+          const nowItem = await OBR.scene.items.getItems([id]);
+          const xNow = nowItem[0].position.x;
+            const yNow = nowItem[0].position.y;
+          const waitChange = setInterval(async () => {
+            const items = await OBR.scene.items.getItems([id]);
+            const item = items[0];
+            const x = item.position.x;
+            const y = item.position.y;
+            if (x !== xNow || y !== yNow) {
+              // Update the x and y values in owlbear path
+                await OBR.scene.items.updateItems([id], (items) => {
+                  const item = items[0];
+                  const path = item.metadata[`${ID}/path`][pathName];
+                  path[index].x = item.position.x;
+                  path[index].y = item.position.y;
+                }).then(() => {
+                  renderList();
+                });
+
+              clearInterval(waitChange);
+            }
+          }, 500); // Wait 500ms to recheck
+
+
+        };
+
+        space.appendChild(image);
         coordDiv.appendChild(space);
         const divRotation = document.createElement('div');
         divRotation.appendChild(rotationSpan); // Rotation label
@@ -235,3 +267,4 @@ function handleInputChange(event) {
         path[index][type] = newValue;
     });
 }
+
