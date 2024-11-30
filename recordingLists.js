@@ -31,13 +31,15 @@ export const renderList = async (items) => {
   const element = document.querySelector("#initiative-list");
   const initiativeItems = {};
   for (const item of items) {
-    const metadata = item.metadata[`${ID}/path`];
-    console.log(metadata)
-    if (metadata) {
+    const path = item.metadata[`${ID}/path`];
+    const moving = item.metadata[`${ID}/moving`];
+    console.log(moving)
+    if (path) {
       initiativeItems[item.id] = {
         image: item.image.url,
         name: item.name,
-        path: metadata
+        path: path,
+        moving: moving !== undefined
       }
     }
   }
@@ -117,8 +119,13 @@ export const renderList = async (items) => {
     });
     const divButton = document.createElement('div');
     const buttonMove = document.createElement('button');
-    buttonMove.textContent = 'Start moving';
-    buttonMove.moving = false;
+    if (item.moving) {
+      buttonMove.textContent = 'Stop moving';
+      buttonMove.moving = true;
+    } else {
+      buttonMove.textContent = 'Start moving';
+      buttonMove.moving = false;
+    }
     buttonMove.addEventListener('click', (event) => {
       if(event.target.moving) {
         OBR.scene.items.updateItems([id], (items) => {

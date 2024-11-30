@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
+import {renderList} from "./recordingLists.js";
 
 export function setupRecordingMenu() {
   OBR.contextMenu.create({
@@ -51,6 +52,7 @@ export function setupRecordingMenu() {
               pathCreations[item.id][pathCreations[item.id].length - 1].time = ms;
               console.log(pathCreations)
               item.metadata[`${ID}/path`] = pathCreations[item.id];
+
               /*
               console.log(pathCreations[item.id][0])
               console.log(item.position.x + " " + item.position.y + " " + item.rotation)
@@ -65,6 +67,7 @@ export function setupRecordingMenu() {
             }
           }
         });
+        renderList()
       }
     },
   });

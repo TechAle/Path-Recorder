@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
+import {renderList} from "./recordingLists.js";
 
 export async function animation(id) {
   const globalItems = await OBR.scene.items.getItems([id]);
@@ -139,6 +140,7 @@ export function setupMovingMenu() {
           }
         });
       }
+      renderList()
     },
   });
 }
