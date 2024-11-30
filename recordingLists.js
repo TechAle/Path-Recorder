@@ -2,6 +2,8 @@ import OBR from "@owlbear-rodeo/sdk";
 import {ID} from "./globalVariables";
 import {animation} from "./movingMenu.js"
 
+let tryingDelete = false
+
 export const renderList = async (items) => {
   if (!items) {
     try {
@@ -30,6 +32,7 @@ export const renderList = async (items) => {
         paths: paths,
         moving: moving !== undefined
       }
+      console.log(paths)
     }
   }
 
@@ -87,22 +90,33 @@ export const renderList = async (items) => {
         const indexDiv = document.createElement('div');
         indexDiv.textContent = index + 1;
         indexDiv.classList.add('index');
+        indexDiv.onclick = async () => {
+            if(tryingDelete) {
+              await OBR.scene.items.updateItems([id], (items) => {
+                const item = items[0];
+                item.metadata[`${ID}/path`][pathName].splice(index, 1);
+              }).then(() => {
+                renderList();
+              });
+              tryingDelete = false
+            }
+        }
 
         // X and Y
         const xSpan = document.createElement('span');
         xSpan.textContent = 'X';
-        const xInput = createInput('x', coord.x, id, index);
+        const xInput = createInput('x', coord.x, id, index, pathName);
         const ySpan = document.createElement('span');
         ySpan.textContent = 'Y';
-        const yInput = createInput('y', coord.y, id, index);
+        const yInput = createInput('y', coord.y, id, index, pathName);
 
         // Rotation and Time
         const rotationSpan = document.createElement('span');
         rotationSpan.textContent = 'Rot.';
-        const rotationInput = createInput('rotation', coord.rotation, id, index);
+        const rotationInput = createInput('rotation', coord.rotation, id, index, pathName);
         const timeSpan = document.createElement('span');
         timeSpan.textContent = 'Time';
-        const timeInput = createInput('time', coord.time, id, index);
+        const timeInput = createInput('time', coord.time, id, index, pathName);
 
         // Append elements to the container
         coordDiv.appendChild(indexDiv); // Index
@@ -125,18 +139,21 @@ export const renderList = async (items) => {
           const nowItem = await OBR.scene.items.getItems([id]);
           const xNow = nowItem[0].position.x;
           const yNow = nowItem[0].position.y;
+          const rotNow = nowItem[0].rotation;
           const waitChange = setInterval(async () => {
             const items = await OBR.scene.items.getItems([id]);
             const item = items[0];
             const x = item.position.x;
             const y = item.position.y;
-            if (x !== xNow || y !== yNow) {
+            const rot = item.rotation;
+            if (x !== xNow || y !== yNow || rot !== rotNow) {
               // Update the x and y values in owlbear path
               await OBR.scene.items.updateItems([id], (items) => {
                 const item = items[0];
                 const path = item.metadata[`${ID}/path`][pathName];
                 path[index].x = item.position.x;
                 path[index].y = item.position.y;
+                path[index].rotation = item.rotation;
               }).then(() => {
                 renderList();
               });
@@ -185,8 +202,13 @@ export const renderList = async (items) => {
       divArragment.classList.add('buttonMove');
       const buttonRemove = document.createElement('button');
       buttonRemove.textContent = 'Remove';
-      buttonRemove.addEventListener('click', () => {
-
+      buttonRemove.addEventListener('click', (event) => {
+        if (tryingDelete) {
+          event.target.innerText = "Delete"
+        } else {
+          event.target.innerText = "Select.."
+        }
+        tryingDelete = !tryingDelete
       });
       divArragment.appendChild(buttonRemove);
       coordsDiv.appendChild(divArragment);
@@ -263,13 +285,14 @@ export const renderList = async (items) => {
 
 
 // Function to create input elements for x, y, and time
-function createInput(type, value, id, index) {
+function createInput(type, value, id, index, pathName) {
   const input = document.createElement('input');
   input.type = 'text';
   input.value = value;
   input.dataset.id = id; // Store the id for reference
   input.dataset.index = index; // Store the index for reference
   input.dataset.type = type; // Store the type (x, y, time)
+  input.dataset.pathName = pathName; // Store the path name
 
   // Add event listener to track when the input changes
   input.addEventListener('input', handleInputChange);
@@ -282,6 +305,7 @@ function handleInputChange(event) {
   const input = event.target;
   const id = input.dataset.id;
   const index = input.dataset.index;
+  const pathName = input.dataset.pathName;
   const type = input.dataset.type;
   const newValue = input.value;
 
@@ -289,8 +313,10 @@ function handleInputChange(event) {
   // Update items metadata with owlbear
   OBR.scene.items.updateItems([id], (items) => {
     const item = items[0];
+    console.log(index)
     const path = item.metadata[`${ID}/path`];
-    path[index][type] = newValue;
+    console.log(path)
+    path[pathName][index][type] = newValue;
   });
 }
 

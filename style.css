@@ -168,3 +168,7 @@ button:focus-visible {
   filter: invert(1);
   cursor: pointer;
 }
+
+.index {
+  cursor: pointer;
+}
