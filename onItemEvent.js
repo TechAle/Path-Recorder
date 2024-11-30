@@ -3,8 +3,7 @@ import {ID, pathCreations} from "./globalVariables";
 
 let idValues = {}
 
-
-export async function setupOnItemEvent() {
+function setupItemEvent() {
     OBR.scene.items.getItems(e => e.type === "IMAGE").then((items) => {
         for (let item of items) {
             idValues[item.id] = {
@@ -48,4 +47,11 @@ export async function setupOnItemEvent() {
             }
         }
     })
+}
+
+export function setupOnItemEvent() {
+    OBR.scene.onReadyChange(() => {
+        setupItemEvent();
+    });
+
 }

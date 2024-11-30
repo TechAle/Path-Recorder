@@ -41,6 +41,7 @@ h1 {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%;
 }
 
 .logo {
@@ -128,4 +129,16 @@ button:focus-visible {
 
 #initiative-list {
   padding-left: 0 !important;
+}
+.buttonToggle {
+  vertical-align: middle;
+  cursor: pointer;
+  line-height: 60px;
+  margin-left: 5px;
+}
+
+.buttonMove {
+  text-align: center;
+  width: 100%;
+  margin-top: 10px;
 }

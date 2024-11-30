@@ -1,7 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
 
-async function animation(id) {
+export async function animation(id) {
   const globalItems = await OBR.scene.items.getItems([id]);
   //console.log(globalItems)
   // Add the global item to the local scene
