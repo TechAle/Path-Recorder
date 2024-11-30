@@ -56,14 +56,22 @@ export const renderList = async (items) => {
     const buttonToggle = document.createElement('span');
     buttonToggle.classList.add("buttonToggle")
     buttonToggle.innerHTML = '&#x2193';
-    buttonToggle.addEventListener('click', () => {
-      const coordsDiv = document.querySelector(`#coords-${id}`);
-      if (coordsDiv.style.display === 'none') {
-        coordsDiv.style.display = 'block';
-        buttonToggle.innerHTML = '&#x2193';
+    buttonToggle.addEventListener('click', (event) => {
+      const elems = document.getElementsByClassName(`wrapper-${id}`)
+      for (let i = 0; i < elems.length; i++) {
+          if (event.target.innerHTML === '↑') {
+              elems[i].style.display = 'block';
+          } else {
+                elems[i].style.display = 'none';
+          }
+      }
+
+      if (event.target.innerText === '↓') {
+        console.log("entra")
+        event.target.innerHTML = '↑';
       } else {
-        coordsDiv.style.display = 'none';
-        buttonToggle.innerHTML = '&#x2191';
+        console.log("esce")
+        event.target.innerHTML = '↓';
       }
     });
     itemDiv.appendChild(buttonToggle);
@@ -73,14 +81,37 @@ export const renderList = async (items) => {
     element.appendChild(itemDiv);
 
     for(const pathName in item.paths) {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('wrapper-'+id);
       const nameDiv = document.createElement('div');
       nameDiv.textContent = pathName;
+      const spanArrow = document.createElement('span');
+        spanArrow.innerHTML = '&#x2193';
+        spanArrow.classList.add("buttonToggle")
+        spanArrow.addEventListener('click', (event) => {
+        const elems = document.getElementsByClassName(`${pathName}-${id}`)
+          for (let i = 0; i < elems.length; i++) {
+            if (event.target.innerHTML === '↑') {
+              elems[i].style.display = 'block';
+            } else {
+              elems[i].style.display = 'none';
+            }
+          }
+
+          if (event.target.innerHTML === '↓') {
+            event.target.innerHTML = '↑';
+          } else {
+            event.target.innerHTML = '↓';
+          }
+      });
+      nameDiv.appendChild(spanArrow);
       nameDiv.classList.add('name');
-      element.appendChild(nameDiv);
+      nameDiv.classList.add('name-' + id);
+      wrapper.appendChild(nameDiv);
 
       const coordsDiv = document.createElement('div');
       coordsDiv.classList.add('coordinates');
-      coordsDiv.id = `coords-${id}`;
+      coordsDiv.classList.add(pathName + '-' + id);
 
       item.paths[pathName].forEach((coord, index) => {
         const coordDiv = document.createElement('div');
@@ -274,7 +305,8 @@ export const renderList = async (items) => {
       });
       divButton.appendChild(buttonDelete);
       coordsDiv.appendChild(divButton);
-      element.appendChild(coordsDiv);
+      wrapper.appendChild(coordsDiv);
+      element.appendChild(wrapper);
     }
 
 
