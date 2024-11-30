@@ -1,28 +1,28 @@
 import OBR from "@owlbear-rodeo/sdk";
-import {ID} from "./globalVariables";
-import {animation} from "./movingMenu.js"
+import { ID } from "./globalVariables";
+import { animation } from "./movingMenu.js";
 
-let tryingDelete = false
+let tryingDelete = false;
 
 export const renderList = async (items) => {
   if (!items) {
     try {
-      let prova = await OBR.scene.items.getItems();
-      renderList(prova)
-    }catch (e) {
+      const prova = await OBR.scene.items.getItems();
+      renderList(prova);
+    } catch (e) {
       OBR.scene.onReadyChange(() => {
         OBR.scene.items.getItems().then((items) => {
-          renderList(items)
+          renderList(items);
         });
       });
     }
     return;
   }
-  // Get the name and initiative of any item with
-  // our initiative metadata
+
   const element = document.querySelector("#initiative-list");
   const movingNpcs = {};
-  for (const item of items) {
+
+  items.forEach((item) => {
     const paths = item.metadata[`${ID}/path`];
     const moving = item.metadata[`${ID}/moving`];
     if (paths) {
@@ -30,325 +30,276 @@ export const renderList = async (items) => {
         image: item.image.url,
         name: item.name,
         paths: paths,
-        moving: moving !== undefined
-      }
-      console.log(paths)
+        moving: moving !== undefined,
+      };
     }
-  }
+  });
 
-  element.innerHTML = '';
-  // Iterate through the data object
-  for (const id in movingNpcs) {
-    const item = movingNpcs[id];
-    // Create the elements for each item
-    const itemDiv = document.createElement('div');
-    itemDiv.classList.add('item');
+  element.innerHTML = "";
 
-    // Display the image and name
-    const imageElement = document.createElement('img');
-    imageElement.src = item.image;
-    imageElement.alt = item.name;
-    itemDiv.appendChild(imageElement);
-
-    const nameElement = document.createElement('h3');
-    nameElement.textContent = item.name;
-    itemDiv.appendChild(nameElement);
-    const buttonToggle = document.createElement('span');
-    buttonToggle.classList.add("buttonToggle")
-    buttonToggle.innerHTML = '&#x2193';
-    buttonToggle.addEventListener('click', (event) => {
-      const elems = document.getElementsByClassName(`wrapper-${id}`)
-      for (let i = 0; i < elems.length; i++) {
-          if (event.target.innerHTML === '↑') {
-              elems[i].style.display = 'block';
-          } else {
-                elems[i].style.display = 'none';
-          }
-      }
-
-      if (event.target.innerText === '↓') {
-        console.log("entra")
-        event.target.innerHTML = '↑';
-      } else {
-        console.log("esce")
-        event.target.innerHTML = '↓';
-      }
-    });
-    itemDiv.appendChild(buttonToggle);
-
-
-    // Append the item to the container
+  Object.entries(movingNpcs).forEach(([id, item]) => {
+    const itemDiv = createItemDiv(item, id);
     element.appendChild(itemDiv);
 
-    for(const pathName in item.paths) {
-      const wrapper = document.createElement('div');
-      wrapper.classList.add('wrapper-'+id);
-      const nameDiv = document.createElement('div');
-      nameDiv.textContent = pathName;
-      const spanArrow = document.createElement('span');
-        spanArrow.innerHTML = '&#x2193';
-        spanArrow.classList.add("buttonToggle")
-        spanArrow.addEventListener('click', (event) => {
-        const elems = document.getElementsByClassName(`${pathName}-${id}`)
-          for (let i = 0; i < elems.length; i++) {
-            if (event.target.innerHTML === '↑') {
-              elems[i].style.display = 'block';
-            } else {
-              elems[i].style.display = 'none';
-            }
-          }
+    Object.keys(item.paths).forEach((pathName) => {
+      const wrapper = createPathWrapper(item, id, pathName);
+      element.appendChild(wrapper);
+    });
+  });
+};
 
-          if (event.target.innerHTML === '↓') {
-            event.target.innerHTML = '↑';
-          } else {
-            event.target.innerHTML = '↓';
-          }
+function createItemDiv(item, id) {
+  const itemDiv = document.createElement("div");
+  itemDiv.classList.add("item");
+
+  const imageElement = document.createElement("img");
+  imageElement.src = item.image;
+  imageElement.alt = item.name;
+  itemDiv.appendChild(imageElement);
+
+  const nameElement = document.createElement("h3");
+  nameElement.textContent = item.name;
+  itemDiv.appendChild(nameElement);
+
+  const buttonToggle = document.createElement("span");
+  buttonToggle.classList.add("buttonToggle");
+  buttonToggle.innerHTML = "&#x2193";
+  buttonToggle.addEventListener("click", (event) => {
+    toggleElementsVisibility(event, `wrapper-${id}`);
+  });
+  itemDiv.appendChild(buttonToggle);
+
+  return itemDiv;
+}
+
+function createPathWrapper(item, id, pathName) {
+  const wrapper = document.createElement("div");
+  wrapper.classList.add(`wrapper-${id}`);
+
+  const nameDiv = document.createElement("div");
+  nameDiv.textContent = pathName;
+  const spanArrow = document.createElement("span");
+  spanArrow.innerHTML = "&#x2193";
+  spanArrow.classList.add("buttonToggle");
+  spanArrow.addEventListener("click", (event) => {
+    toggleElementsVisibility(event, `${pathName}-${id}`);
+  });
+  nameDiv.appendChild(spanArrow);
+  nameDiv.classList.add("name", `name-${id}`);
+  wrapper.appendChild(nameDiv);
+
+  const coordsDiv = document.createElement("div");
+  coordsDiv.classList.add("coordinates", `${pathName}-${id}`);
+
+  item.paths[pathName].forEach((coord, index) => {
+    const coordDiv = createCoordDiv(coord, id, index, pathName);
+    coordsDiv.appendChild(coordDiv);
+  });
+
+  const divArragment = createDivArragment(id, pathName);
+  coordsDiv.appendChild(divArragment);
+
+  const divButton = createDivButton(item, id, pathName);
+  coordsDiv.appendChild(divButton);
+
+  wrapper.appendChild(coordsDiv);
+  return wrapper;
+}
+
+function createCoordDiv(coord, id, index, pathName) {
+  const coordDiv = document.createElement("div");
+  coordDiv.classList.add("coordinate");
+
+  const indexDiv = document.createElement("div");
+  indexDiv.textContent = index + 1;
+  indexDiv.classList.add("index");
+  indexDiv.onclick = async () => {
+    if (tryingDelete) {
+      await OBR.scene.items.updateItems([id], (items) => {
+        const item = items[0];
+        item.metadata[`${ID}/path`][pathName].splice(index, 1);
+      }).then(() => {
+        renderList();
       });
-      nameDiv.appendChild(spanArrow);
-      nameDiv.classList.add('name');
-      nameDiv.classList.add('name-' + id);
-      wrapper.appendChild(nameDiv);
+      tryingDelete = false;
+    }
+  };
 
-      const coordsDiv = document.createElement('div');
-      coordsDiv.classList.add('coordinates');
-      coordsDiv.classList.add(pathName + '-' + id);
+  const xInput = createInput("x", coord.x, id, index, pathName);
+  const yInput = createInput("y", coord.y, id, index, pathName);
+  const rotationInput = createInput("rotation", coord.rotation, id, index, pathName);
+  const timeInput = createInput("time", coord.time, id, index, pathName);
 
-      item.paths[pathName].forEach((coord, index) => {
-        const coordDiv = document.createElement('div');
-        coordDiv.classList.add('coordinate');
+  coordDiv.appendChild(indexDiv);
+  coordDiv.appendChild(createLabeledInput("X", xInput));
+  coordDiv.appendChild(createLabeledInput("Y", yInput));
+  coordDiv.appendChild(createMouseIcon(id, index, pathName));
+  coordDiv.appendChild(createLabeledInput("Rot.", rotationInput));
+  coordDiv.appendChild(createLabeledInput("Time", timeInput));
 
-        // Index
-        const indexDiv = document.createElement('div');
-        indexDiv.textContent = index + 1;
-        indexDiv.classList.add('index');
-        indexDiv.onclick = async () => {
-            if(tryingDelete) {
-              await OBR.scene.items.updateItems([id], (items) => {
-                const item = items[0];
-                item.metadata[`${ID}/path`][pathName].splice(index, 1);
-              }).then(() => {
-                renderList();
-              });
-              tryingDelete = false
-            }
-        }
+  return coordDiv;
+}
 
-        // X and Y
-        const xSpan = document.createElement('span');
-        xSpan.textContent = 'X';
-        const xInput = createInput('x', coord.x, id, index, pathName);
-        const ySpan = document.createElement('span');
-        ySpan.textContent = 'Y';
-        const yInput = createInput('y', coord.y, id, index, pathName);
+function createLabeledInput(labelText, inputElement) {
+  const div = document.createElement("div");
+  div.classList.add("cell");
 
-        // Rotation and Time
-        const rotationSpan = document.createElement('span');
-        rotationSpan.textContent = 'Rot.';
-        const rotationInput = createInput('rotation', coord.rotation, id, index, pathName);
-        const timeSpan = document.createElement('span');
-        timeSpan.textContent = 'Time';
-        const timeInput = createInput('time', coord.time, id, index, pathName);
+  const label = document.createElement("span");
+  label.textContent = labelText;
 
-        // Append elements to the container
-        coordDiv.appendChild(indexDiv); // Index
-        const divX = document.createElement('div');
-        divX.appendChild(xSpan); // X label
-        divX.appendChild(xInput); // X input
-        divX.classList.add("cell");
-        coordDiv.appendChild(divX);
-        const divY = document.createElement('div');
-        divY.appendChild(ySpan); // Y label
-        divY.appendChild(yInput); // Y input
-        divY.classList.add("cell");
-        coordDiv.appendChild(divY);
-        const space = document.createElement('div');
-        const image = document.createElement('img');
-        image.src = "./public/mouse.svg"
-        image.classList.add("mouse")
-        // Add click listener to the image
-        image.onclick = async () => {;
-          const nowItem = await OBR.scene.items.getItems([id]);
-          const xNow = nowItem[0].position.x;
-          const yNow = nowItem[0].position.y;
-          const rotNow = nowItem[0].rotation;
-          const waitChange = setInterval(async () => {
-            const items = await OBR.scene.items.getItems([id]);
-            const item = items[0];
-            const x = item.position.x;
-            const y = item.position.y;
-            const rot = item.rotation;
-            if (x !== xNow || y !== yNow || rot !== rotNow) {
-              // Update the x and y values in owlbear path
-              await OBR.scene.items.updateItems([id], (items) => {
-                const item = items[0];
-                const path = item.metadata[`${ID}/path`][pathName];
-                path[index].x = item.position.x;
-                path[index].y = item.position.y;
-                path[index].rotation = item.rotation;
-              }).then(() => {
-                renderList();
-              });
+  div.appendChild(label);
+  div.appendChild(inputElement);
 
-              clearInterval(waitChange);
-            }
-          }, 500); // Wait 500ms to recheck
+  return div;
+}
 
-
-        };
-
-        space.appendChild(image);
-        coordDiv.appendChild(space);
-        const divRotation = document.createElement('div');
-        divRotation.appendChild(rotationSpan); // Rotation label
-        divRotation.appendChild(rotationInput); // Rotation input
-        divRotation.classList.add("cell");
-        coordDiv.appendChild(divRotation);
-        const divTime = document.createElement('div');
-        divTime.appendChild(timeSpan); // Time label
-        divTime.appendChild(timeInput); // Time input
-        divTime.classList.add("cell");
-        coordDiv.appendChild(divTime);
-
-
-        coordsDiv.appendChild(coordDiv);
-      });
-
-      const divArragment = document.createElement('div');
-      const buttonAdd = document.createElement('button');
-      buttonAdd.textContent = 'Add';
-      buttonAdd.addEventListener('click', () => {
-        OBR.scene.items.updateItems([id], (items) => {
+function createMouseIcon(id, index, pathName) {
+  const space = document.createElement("div");
+  const image = document.createElement("img");
+  image.src = "./public/mouse.svg";
+  image.classList.add("mouse");
+  image.onclick = async () => {
+    const nowItem = await OBR.scene.items.getItems([id]);
+    const xNow = nowItem[0].position.x;
+    const yNow = nowItem[0].position.y;
+    const rotNow = nowItem[0].rotation;
+    const waitChange = setInterval(async () => {
+      const items = await OBR.scene.items.getItems([id]);
+      const item = items[0];
+      const x = item.position.x;
+      const y = item.position.y;
+      const rot = item.rotation;
+      if (x !== xNow || y !== yNow || rot !== rotNow) {
+        await OBR.scene.items.updateItems([id], (items) => {
           const item = items[0];
-          item.metadata[`${ID}/path`][pathName].push({
-            x: item.position.x,
-            y: item.position.y,
-            rotation: item.rotation,
-            time: 0
-          });
+          const path = item.metadata[`${ID}/path`][pathName];
+          path[index].x = item.position.x;
+          path[index].y = item.position.y;
+          path[index].rotation = item.rotation;
         }).then(() => {
           renderList();
         });
-      });
-      divArragment.appendChild(buttonAdd);
-      divArragment.classList.add('buttonMove');
-      const buttonRemove = document.createElement('button');
-      buttonRemove.textContent = 'Remove';
-      buttonRemove.addEventListener('click', (event) => {
-        if (tryingDelete) {
-          event.target.innerText = "Delete"
-        } else {
-          event.target.innerText = "Select.."
-        }
-        tryingDelete = !tryingDelete
-      });
-      divArragment.appendChild(buttonRemove);
-      coordsDiv.appendChild(divArragment);
-
-
-      const divButton = document.createElement('div');
-      const buttonMove = document.createElement('button');
-      buttonMove.classList.add(`${id}button`)
-      if (item.moving) {
-        buttonMove.textContent = 'Stop moving';
-        buttonMove.moving = true;
-      } else {
-        buttonMove.textContent = 'Start moving';
-        buttonMove.moving = false;
+        clearInterval(waitChange);
       }
-      buttonMove.addEventListener('click', (event) => {
-        if(event.target.moving) {
-          OBR.scene.items.updateItems([id], (items) => {
-            const item = items[0];
-            delete item.metadata[`${ID}/moving`];
-          });
-        } else
-          OBR.scene.items.updateItems([id], (items) => {
-            const item = items[0];
-            item.metadata[`${ID}/moving`] = {
-              moving: true
-            };
-            let id = item.id;
+    }, 500);
+  };
+  space.appendChild(image);
+  return space;
+}
 
-            animation(id, pathName)
-          });
-        event.target.moving = !event.target.moving;
-        let t = document.getElementsByClassName(`${id}button`)
-        for (let i = 0; i < t.length; i++) {
-          t[i].textContent = event.target.moving ? 'Stop moving' : 'Start moving';
-          t[i].moving = event.target.moving;
-        }
+function createDivArragment(id, pathName) {
+  const divArragment = document.createElement("div");
+  divArragment.classList.add("buttonMove");
+
+  const buttonAdd = document.createElement("button");
+  buttonAdd.textContent = "Add";
+  buttonAdd.addEventListener("click", () => {
+    OBR.scene.items.updateItems([id], (items) => {
+      const item = items[0];
+      item.metadata[`${ID}/path`][pathName].push({
+        x: item.position.x,
+        y: item.position.y,
+        rotation: item.rotation,
+        time: 0,
       });
-      divButton.appendChild(buttonMove);
-      divButton.classList.add('buttonMove');
-      const buttonDelete = document.createElement('button');
-      buttonDelete.idClass = id
-      divButton.classList.add('buttonMove');
-      buttonDelete.textContent = 'Delete';
-      buttonDelete.addEventListener('click', async (event) => {
-        // Check if it's moving with the api
-        let items = await OBR.scene.items.getItems([event.target.idClass])
-        let item = items[0];
-        let moving = item.metadata[`${ID}/moving`];
-        if (moving) {
-          alert("First stop moving")
-        } else {
-          OBR.scene.items.updateItems([id], (items) => {
-            const item = items[0];
-            delete item.metadata[`${ID}/path`][pathName];
-            if (Object.keys(item.metadata[`${ID}/path`]).length === 0) {
-              delete item.metadata[`${ID}/path`];
-            }
-          }).then(() => {
-            renderList();
-          });
-        }
+    }).then(() => {
+      renderList();
+    });
+  });
+  divArragment.appendChild(buttonAdd);
+
+  const buttonRemove = document.createElement("button");
+  buttonRemove.textContent = "Remove";
+  buttonRemove.addEventListener("click", (event) => {
+    tryingDelete = !tryingDelete;
+    event.target.innerText = tryingDelete ? "Select.." : "Delete";
+  });
+  divArragment.appendChild(buttonRemove);
+
+  return divArragment;
+}
+
+function createDivButton(item, id, pathName) {
+  const divButton = document.createElement("div");
+  divButton.classList.add("buttonMove");
+
+  const buttonMove = document.createElement("button");
+  buttonMove.classList.add(`${id}button`);
+  buttonMove.textContent = item.moving ? "Stop moving" : "Start moving";
+  buttonMove.moving = item.moving;
+  buttonMove.addEventListener("click", (event) => {
+    if (event.target.moving) {
+      OBR.scene.items.updateItems([id], (items) => {
+        const item = items[0];
+        delete item.metadata[`${ID}/moving`];
       });
-      divButton.appendChild(buttonDelete);
-      coordsDiv.appendChild(divButton);
-      wrapper.appendChild(coordsDiv);
-      element.appendChild(wrapper);
+    } else {
+      OBR.scene.items.updateItems([id], (items) => {
+        const item = items[0];
+        item.metadata[`${ID}/moving`] = { moving: true };
+        animation(id, pathName);
+      });
     }
+    event.target.moving = !event.target.moving;
+    const buttons =  document.getElementsByClassName(`${id}button`)
+    for (let btn of buttons) {
+      btn.textContent = event.target.moving ? "Stop moving" : "Start moving";
+      btn.moving = event.target.moving;
+    }
+  });
+  divButton.appendChild(buttonMove);
 
+  const buttonDelete = document.createElement("button");
+  buttonDelete.textContent = "Delete";
+  buttonDelete.addEventListener("click", async (event) => {
+    const items = await OBR.scene.items.getItems([id]);
+    const item = items[0];
+    if (item.metadata[`${ID}/moving`]) {
+      alert("First stop moving");
+    } else {
+      OBR.scene.items.updateItems([id], (items) => {
+        const item = items[0];
+        delete item.metadata[`${ID}/path`][pathName];
+        if (Object.keys(item.metadata[`${ID}/path`]).length === 0) {
+          delete item.metadata[`${ID}/path`];
+        }
+      }).then(() => {
+        renderList();
+      });
+    }
+  });
+  divButton.appendChild(buttonDelete);
 
-  }
+  return divButton;
+}
 
+function toggleElementsVisibility(event, className) {
+  const elems = document.getElementsByClassName(className);
+  Array.from(elems).forEach((elem) => {
+    elem.style.display = event.target.innerHTML === "↑" ? "block" : "none";
+  });
+  event.target.innerHTML = event.target.innerHTML === "↓" ? "↑" : "↓";
+}
 
-};
-
-
-// Function to create input elements for x, y, and time
 function createInput(type, value, id, index, pathName) {
-  const input = document.createElement('input');
-  input.type = 'text';
+  const input = document.createElement("input");
+  input.type = "text";
   input.value = value;
-  input.dataset.id = id; // Store the id for reference
-  input.dataset.index = index; // Store the index for reference
-  input.dataset.type = type; // Store the type (x, y, time)
-  input.dataset.pathName = pathName; // Store the path name
-
-  // Add event listener to track when the input changes
-  input.addEventListener('input', handleInputChange);
-
+  input.dataset.id = id;
+  input.dataset.index = index;
+  input.dataset.type = type;
+  input.dataset.pathName = pathName;
+  input.addEventListener("input", handleInputChange);
   return input;
 }
 
-// Function to handle input changes
 function handleInputChange(event) {
   const input = event.target;
-  const id = input.dataset.id;
-  const index = input.dataset.index;
-  const pathName = input.dataset.pathName;
-  const type = input.dataset.type;
+  const { id, index, pathName, type } = input.dataset;
   const newValue = input.value;
 
-  // Update the corresponding data in the dictionary
-  // Update items metadata with owlbear
   OBR.scene.items.updateItems([id], (items) => {
     const item = items[0];
-    console.log(index)
-    const path = item.metadata[`${ID}/path`];
-    console.log(path)
-    path[pathName][index][type] = newValue;
+    item.metadata[`${ID}/path`][pathName][index][type] = newValue;
   });
 }
-
