@@ -15,5 +15,13 @@ document.querySelector("#app").innerHTML = `
 OBR.onReady(() => {
   setupRecordingMenu();
   setupOnItemEvent();
+
+  // When the scene is changing
+  OBR.scene.onReadyChange(() => {
+    renderList();
+  });
+  // When we are reloading in debug
   renderList();
+  // This could prob be done better, but it works!
+
 });

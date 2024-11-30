@@ -55,7 +55,13 @@ export async function animation(id, namePath) {
 
     let stepX = (nextX - currentX) / numSteps;
     let stepY = (nextY - currentY) / numSteps;
-    let stepRotation = (nextRotation - currentRotation) / numSteps;
+    let stepRotation = 0
+    if (Math.abs(nextRotation - currentRotation) > Math.abs(currentRotation - nextRotation)) {
+      stepRotation = (currentRotation - nextRotation) / numSteps;
+    } else {
+        stepRotation = (nextRotation - currentRotation) / numSteps
+    }
+    console.log(stepRotation)
     let timeNow = new Date().getTime();
     for (let j = 0; j < numSteps; j++) {
       // Calculate the new intermediate position

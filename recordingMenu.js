@@ -59,16 +59,6 @@ export function setupRecordingMenu() {
               }
               item.metadata[`${ID}/path`][name] = pathCreations[item.id];
               console.log(name)
-
-              /*
-              console.log(pathCreations[item.id][0])
-              console.log(item.position.x + " " + item.position.y + " " + item.rotation)
-              item.position = {
-                x: pathCreations[item.id][0].x,
-                y: pathCreations[item.id][0].y,
-                rotation: pathCreations[item.id][0].rotation
-              };
-              console.log(item.position.x + " " + item.position.y + " " + item.rotation)*/
             } catch (e) {
               console.log(e)
             }

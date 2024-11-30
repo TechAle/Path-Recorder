@@ -70,7 +70,6 @@ export const renderList = async (items) => {
     element.appendChild(itemDiv);
 
     for(const pathName in item.paths) {
-
       const nameDiv = document.createElement('div');
         nameDiv.textContent = pathName;
       nameDiv.classList.add('name');
