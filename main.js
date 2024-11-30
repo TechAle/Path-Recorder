@@ -8,7 +8,7 @@ import { setupOnItemEvent } from "./onItemEvent";
 
 document.querySelector("#app").innerHTML = `
   <div>
-    <h1>Initiative Tracker</h1>
+    <h1 id="titlePath">Path recorders</h1>
     <ul id="initiative-list"></ul>
   </div>
 `;
