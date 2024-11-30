@@ -38,8 +38,9 @@ async function animation(id) {
       }
     });
   }
+  const animationTime = 50
   while (running) {
-
+    // Getting data
     let currentX = path[i].x;
     let currentY = path[i].y;
     let currentRotation = path[i].rotation;
@@ -47,26 +48,21 @@ async function animation(id) {
     let nextY = path[(i + 1) % lenPath].y;
     let nextRotation = path[(i + 1) % lenPath].rotation;
     let time = path[i].time;
-    let distance = Math.sqrt((nextX - currentX) ** 2 + (nextY - currentY) ** 2);
-    let distanceRotation = Math.abs(nextRotation - currentRotation);
-    // Dynamic number of steps based on the distance
-    let scaleFactor = 0.25; // Adjust this value based on how smooth you want the movement
-    let numSteps = Math.max(Math.floor(distance * scaleFactor), 1, Math.floor(distanceRotation * scaleFactor)); // Ensure at least 1 step
-    console.log(numSteps)
-// Calculate the time per step (in milliseconds)
-    let stepTime = (time) / numSteps; // Convert time to milliseconds
 
-// Calculate the step size in both X and Y directions
+    // Dynamic number of steps based on the distance
+    let numSteps = time / animationTime;
+
     let stepX = (nextX - currentX) / numSteps;
     let stepY = (nextY - currentY) / numSteps;
     let stepRotation = (nextRotation - currentRotation) / numSteps;
-
+    let timeNow = new Date().getTime();
     for (let j = 0; j < numSteps; j++) {
       // Calculate the new intermediate position
       let newX = currentX + stepX * (j + 1);
       let newY = currentY + stepY * (j + 1);
       let newRotation = currentRotation + stepRotation * (j + 1);
 
+      let startingTime = new Date().getTime();
       // Update position locally
       await OBR.scene.local.updateItems([id], (items) => {
         let item = items[0];
@@ -76,11 +72,14 @@ async function animation(id) {
         running = item.metadata[`${ID}/moving`] !== undefined;
       });
       if (!running) break
+      let endingTime = new Date().getTime();
+
 
       // Add a delay for smooth animation
-      await new Promise((resolve) => setTimeout(resolve, stepTime)); // Adjust delay as needed
+      await new Promise((resolve) => setTimeout(resolve,  animationTime - (endingTime - startingTime)));
     }
-
+    let timeAfter = new Date().getTime();
+    console.log(timeAfter - timeNow + " " + time)
     if (!running) break
 
     // Ensure the final position matches the target
