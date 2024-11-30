@@ -2,7 +2,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
 import {renderList} from "./recordingLists.js";
 
-export async function animation(id) {
+export async function animation(id, namePath) {
   const globalItems = await OBR.scene.items.getItems([id]);
   //console.log(globalItems)
   // Add the global item to the local scene
@@ -20,18 +20,18 @@ export async function animation(id) {
       item.metadata[`${ID}/moving`] = {
         moving: true
       };
-      item.position.x = item.metadata[`${ID}/path`][0].x;
-      item.position.y = item.metadata[`${ID}/path`][0].y;
-      lenPath = item.metadata[`${ID}/path`].length;
+      item.position.x = item.metadata[`${ID}/path`][namePath][0].x;
+      item.position.y = item.metadata[`${ID}/path`][namePath][0].y;
+      lenPath = item.metadata[`${ID}/path`][namePath].length;
       running = item.metadata[`${ID}/moving`] !== undefined;
       if (running) {
         // I hate proxy
         for(let i = 0; i < lenPath; i++) {
           path.push({
-            x: item.metadata[`${ID}/path`][i].x,
-            y: item.metadata[`${ID}/path`][i].y,
-            rotation: item.metadata[`${ID}/path`][i].rotation,
-            time: item.metadata[`${ID}/path`][i].time
+            x: item.metadata[`${ID}/path`][namePath][i].x,
+            y: item.metadata[`${ID}/path`][namePath][i].y,
+            rotation: item.metadata[`${ID}/path`][namePath][i].rotation,
+            time: item.metadata[`${ID}/path`][namePath][i].time
           })
         }
       } else {
@@ -96,6 +96,7 @@ export async function animation(id) {
 
 }
 
+/*
 export function setupMovingMenu() {
   OBR.contextMenu.create({
     id: `${ID}/movingMenu`,
@@ -143,4 +144,4 @@ export function setupMovingMenu() {
       renderList()
     },
   });
-}
+}*/

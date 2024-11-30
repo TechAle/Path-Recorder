@@ -114,17 +114,26 @@ button:focus-visible {
   text-align: left !important;
 }
 .coordinate {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto repeat(2, minmax(100px, 1fr)); /* Index, X/Y, and Rotation/Time */
   gap: 10px;
+  align-items: center; /* Vertically align elements */
+  margin-bottom: 10px;
 }
 
+
 .coordinate span {
-  margin-bottom: 5px;
+  text-align: right; /* Align labels to the right */
 }
 
 .coordinate input {
-  width: 100%;
+  width: 100px; /* Control the size of the input fields */
   box-sizing: border-box;
+}
+
+.cell {
+    display: flex;
+    justify-content: space-between;
 }
 
 #initiative-list {
@@ -141,4 +150,15 @@ button:focus-visible {
   text-align: center;
   width: 100%;
   margin-top: 10px;
+}
+
+.buttonMove {
+  display: flex;
+  justify-content: space-between; /* Space between buttons */
+  align-items: center; /* Align buttons vertically if needed */
+}
+
+.buttonMove button {
+  width: 40%; /* Each button occupies 40% of the container's width */
+  box-sizing: border-box; /* Include padding/border in the width calculation */
 }

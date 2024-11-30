@@ -2,6 +2,10 @@ import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
 import {renderList} from "./recordingLists.js";
 
+function isDict(variable) {
+  return variable && typeof variable === 'object' && !Array.isArray(variable);
+}
+
 export function setupRecordingMenu() {
   OBR.contextMenu.create({
     id: `${ID}/recordingMenu`,
@@ -43,15 +47,18 @@ export function setupRecordingMenu() {
           }
         });
       } else {
-        console.log("Ciao: " + pathCreations)
         OBR.scene.items.updateItems(context.items, (items) => {
           for (let item of items) {
             delete item.metadata[`${ID}/recording`];
             try {
               const ms = parseInt(window.prompt("Time return (ms): "));
               pathCreations[item.id][pathCreations[item.id].length - 1].time = ms;
-              console.log(pathCreations)
-              item.metadata[`${ID}/path`] = pathCreations[item.id];
+              const name = window.prompt("Name recording: ");
+              if (!isDict(item.metadata[`${ID}/path`])) {
+                item.metadata[`${ID}/path`] = {}
+              }
+              item.metadata[`${ID}/path`][name] = pathCreations[item.id];
+              console.log(name)
 
               /*
               console.log(pathCreations[item.id][0])
