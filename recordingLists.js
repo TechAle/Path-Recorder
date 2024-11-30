@@ -71,7 +71,7 @@ export const renderList = async (items) => {
 
     for(const pathName in item.paths) {
       const nameDiv = document.createElement('div');
-        nameDiv.textContent = pathName;
+      nameDiv.textContent = pathName;
       nameDiv.classList.add('name');
       element.appendChild(nameDiv);
 
@@ -124,7 +124,7 @@ export const renderList = async (items) => {
         image.onclick = async () => {;
           const nowItem = await OBR.scene.items.getItems([id]);
           const xNow = nowItem[0].position.x;
-            const yNow = nowItem[0].position.y;
+          const yNow = nowItem[0].position.y;
           const waitChange = setInterval(async () => {
             const items = await OBR.scene.items.getItems([id]);
             const item = items[0];
@@ -132,14 +132,14 @@ export const renderList = async (items) => {
             const y = item.position.y;
             if (x !== xNow || y !== yNow) {
               // Update the x and y values in owlbear path
-                await OBR.scene.items.updateItems([id], (items) => {
-                  const item = items[0];
-                  const path = item.metadata[`${ID}/path`][pathName];
-                  path[index].x = item.position.x;
-                  path[index].y = item.position.y;
-                }).then(() => {
-                  renderList();
-                });
+              await OBR.scene.items.updateItems([id], (items) => {
+                const item = items[0];
+                const path = item.metadata[`${ID}/path`][pathName];
+                path[index].x = item.position.x;
+                path[index].y = item.position.y;
+              }).then(() => {
+                renderList();
+              });
 
               clearInterval(waitChange);
             }
@@ -164,6 +164,32 @@ export const renderList = async (items) => {
 
         coordsDiv.appendChild(coordDiv);
       });
+
+      const divArragment = document.createElement('div');
+      const buttonAdd = document.createElement('button');
+      buttonAdd.textContent = 'Add';
+      buttonAdd.addEventListener('click', () => {
+        OBR.scene.items.updateItems([id], (items) => {
+          const item = items[0];
+          item.metadata[`${ID}/path`][pathName].push({
+            x: item.position.x,
+            y: item.position.y,
+            rotation: item.rotation,
+            time: 0
+          });
+        }).then(() => {
+          renderList();
+        });
+      });
+      divArragment.appendChild(buttonAdd);
+      divArragment.classList.add('buttonMove');
+      const buttonRemove = document.createElement('button');
+      buttonRemove.textContent = 'Remove';
+      buttonRemove.addEventListener('click', () => {
+
+      });
+      divArragment.appendChild(buttonRemove);
+      coordsDiv.appendChild(divArragment);
 
 
       const divButton = document.createElement('div');
@@ -261,10 +287,10 @@ function handleInputChange(event) {
 
   // Update the corresponding data in the dictionary
   // Update items metadata with owlbear
-    OBR.scene.items.updateItems([id], (items) => {
-        const item = items[0];
-        const path = item.metadata[`${ID}/path`];
-        path[index][type] = newValue;
-    });
+  OBR.scene.items.updateItems([id], (items) => {
+    const item = items[0];
+    const path = item.metadata[`${ID}/path`];
+    path[index][type] = newValue;
+  });
 }
 
