@@ -1,7 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import {ID} from "./globalVariables";
 
-export function setupInitiativeList(element) {
+export function setupMenuList(element) {
   const renderList = (items) => {
     // Get the name and initiative of any item with
     // our initiative metadata

@@ -95,9 +95,9 @@ async function animation(id) {
 
 }
 
-export function setupContextMenu2() {
+export function setupMovingMenu() {
   OBR.contextMenu.create({
-    id: `${ID}/context-menu2`,
+    id: `${ID}/movingMenu`,
     icons: [
       {
         icon: "/add.svg",

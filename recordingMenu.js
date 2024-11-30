@@ -1,9 +1,9 @@
 import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
 
-export function setupContextMenu() {
+export function setupRecordingMenu() {
   OBR.contextMenu.create({
-    id: `${ID}/context-menu`,
+    id: `${ID}/recordingMenu`,
     icons: [
       {
         icon: "/add.svg",
