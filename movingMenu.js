@@ -1,153 +1,90 @@
 import OBR from "@owlbear-rodeo/sdk";
-import {ID, pathCreations} from "./globalVariables";
-import {renderList} from "./recordingLists.js";
+import { ID } from "./globalVariables";
 
-export async function animation(id, namePath) {
-  const globalItems = await OBR.scene.items.getItems([id]);
-  //console.log(globalItems)
-  // Add the global item to the local scene
+export async function animation(itemId, pathName) {
+  const globalItems = await OBR.scene.items.getItems([itemId]);
   await OBR.scene.local.addItems(globalItems);
-  //console.log(items)
-  // WHY ARE YALL USING PROXY FUCKING HELL
-  let lenPath;
-  let i = 0;
-  let running = false
+
+  let pathLength;
+  let currentIndex = 0;
+  let isRunning = false;
   let path = [];
-  while (!running) {
-    await OBR.scene.local.updateItems([id], (items) => {
-      let item = items[0]
-      // Something fucks up when transforming the scene item into local
-      item.metadata[`${ID}/moving`] = {
-        moving: true
-      };
-      item.position.x = item.metadata[`${ID}/path`][namePath][0].x;
-      item.position.y = item.metadata[`${ID}/path`][namePath][0].y;
-      lenPath = item.metadata[`${ID}/path`][namePath].length;
-      running = item.metadata[`${ID}/moving`] !== undefined;
-      if (running) {
-        // I hate proxy
-        for(let i = 0; i < lenPath; i++) {
+
+  while (!isRunning) {
+    await OBR.scene.local.updateItems([itemId], (items) => {
+      let item = items[0];
+      item.metadata[`${ID}/moving`] = { moving: true };
+      item.position.x = item.metadata[`${ID}/path`][pathName][0].x;
+      item.position.y = item.metadata[`${ID}/path`][pathName][0].y;
+      pathLength = item.metadata[`${ID}/path`][pathName].length;
+      isRunning = item.metadata[`${ID}/moving`] !== undefined;
+
+      if (isRunning) {
+        for (let i = 0; i < pathLength; i++) {
           path.push({
-            x: item.metadata[`${ID}/path`][namePath][i].x,
-            y: item.metadata[`${ID}/path`][namePath][i].y,
-            rotation: item.metadata[`${ID}/path`][namePath][i].rotation,
-            time: item.metadata[`${ID}/path`][namePath][i].time
-          })
+            x: item.metadata[`${ID}/path`][pathName][i].x,
+            y: item.metadata[`${ID}/path`][pathName][i].y,
+            rotation: item.metadata[`${ID}/path`][pathName][i].rotation,
+            time: item.metadata[`${ID}/path`][pathName][i].time,
+          });
         }
       } else {
-        setTimeout(() => {}, 100)
+        setTimeout(() => {}, 100);
       }
     });
   }
-  const animationTime = 50
-  while (running) {
-    // Getting data
-    let currentX = path[i].x;
-    let currentY = path[i].y;
-    let currentRotation = path[i].rotation;
-    let nextX = path[(i + 1) % lenPath].x;
-    let nextY = path[(i + 1) % lenPath].y;
-    let nextRotation = path[(i + 1) % lenPath].rotation;
-    let time = path[i].time;
 
-    // Dynamic number of steps based on the distance
-    let numSteps = time / animationTime;
+  const animationInterval = 50;
 
-    let stepX = (nextX - currentX) / numSteps;
-    let stepY = (nextY - currentY) / numSteps;
-    let stepRotation = 0
-    if (Math.abs(nextRotation - currentRotation) > Math.abs(currentRotation - nextRotation)) {
-      stepRotation = (currentRotation - nextRotation) / numSteps;
-    } else {
-        stepRotation = (nextRotation - currentRotation) / numSteps
-    }
-    console.log(stepRotation)
-    let timeNow = new Date().getTime();
-    for (let j = 0; j < numSteps; j++) {
-      // Calculate the new intermediate position
+  while (isRunning) {
+    let currentX = path[currentIndex].x;
+    let currentY = path[currentIndex].y;
+    let currentRotation = path[currentIndex].rotation;
+    let nextX = path[(currentIndex + 1) % pathLength].x;
+    let nextY = path[(currentIndex + 1) % pathLength].y;
+    let nextRotation = path[(currentIndex + 1) % pathLength].rotation;
+    let time = path[currentIndex].time;
+
+    let steps = time / animationInterval;
+    let stepX = (nextX - currentX) / steps;
+    let stepY = (nextY - currentY) / steps;
+    let stepRotation = Math.abs(nextRotation - currentRotation) > Math.abs(currentRotation - nextRotation)
+        ? (currentRotation - nextRotation) / steps
+        : (nextRotation - currentRotation) / steps;
+
+    let startTime = new Date().getTime();
+
+    for (let j = 0; j < steps; j++) {
       let newX = currentX + stepX * (j + 1);
       let newY = currentY + stepY * (j + 1);
       let newRotation = currentRotation + stepRotation * (j + 1);
 
-      let startingTime = new Date().getTime();
-      // Update position locally
-      await OBR.scene.local.updateItems([id], (items) => {
+      let stepStartTime = new Date().getTime();
+
+      await OBR.scene.local.updateItems([itemId], (items) => {
         let item = items[0];
-        //console.log(item);
         item.position = { x: newX, y: newY };
-        item.rotation = newRotation
-        running = item.metadata[`${ID}/moving`] !== undefined;
+        item.rotation = newRotation;
+        isRunning = item.metadata[`${ID}/moving`] !== undefined;
       });
-      if (!running) break
-      let endingTime = new Date().getTime();
 
+      if (!isRunning) break;
 
-      // Add a delay for smooth animation
-      await new Promise((resolve) => setTimeout(resolve,  animationTime - (endingTime - startingTime)));
+      let stepEndTime = new Date().getTime();
+      await new Promise((resolve) => setTimeout(resolve, animationInterval - (stepEndTime - stepStartTime)));
     }
-    let timeAfter = new Date().getTime();
-    console.log(timeAfter - timeNow + " " + time)
-    if (!running) break
 
-    // Ensure the final position matches the target
-    await OBR.scene.local.updateItems([id], (items) => {
+    let endTime = new Date().getTime();
+    console.log(endTime - startTime + " " + time);
+
+    if (!isRunning) break;
+
+    await OBR.scene.local.updateItems([itemId], (items) => {
       let item = items[0];
       item.position = { x: nextX, y: nextY };
-      running = item.metadata[`${ID}/moving`] !== undefined;
+      isRunning = item.metadata[`${ID}/moving`] !== undefined;
     });
 
-    // Move to the next path point
-    i = (i + 1) % lenPath;
+    currentIndex = (currentIndex + 1) % pathLength;
   }
-
 }
-
-/*
-export function setupMovingMenu() {
-  OBR.contextMenu.create({
-    id: `${ID}/movingMenu`,
-    icons: [
-      {
-        icon: "/add.svg",
-        label: "Start moving",
-        filter: {
-          every: [
-            { key: "layer", value: "CHARACTER" },
-            { key: ["metadata", `${ID}/moving`], value: undefined },
-          ],
-        },
-      },
-      {
-        icon: "/remove.svg",
-        label: "Stop moving",
-        filter: {
-          every: [{ key: "layer", value: "CHARACTER" }],
-        },
-      },
-    ],
-    onClick(context) {
-      const addToInitiative = context.items[0].metadata[`${ID}/moving`] === undefined;
-      if (addToInitiative) {
-        OBR.scene.items.updateItems(context.items,  (items) => {
-          for (let item of items) {
-            item.metadata[`${ID}/moving`] = {
-              moving: true
-            };
-            let id = item.id;
-
-            animation(id)
-
-          }
-        });
-      }
-      else {
-        OBR.scene.items.updateItems(context.items, (items) => {
-          for (let item of items) {
-            delete item.metadata[`${ID}/moving`];
-          }
-        });
-      }
-      renderList()
-    },
-  });
-}*/

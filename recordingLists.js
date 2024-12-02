@@ -2,14 +2,18 @@ import OBR from "@owlbear-rodeo/sdk";
 import { ID } from "./globalVariables";
 import { animation } from "./movingMenu.js";
 
+// Flag to indicate if the user is trying to delete an item
 let tryingDelete = false;
 
+// Function to render the list of items
 export const renderList = async (items) => {
   if (!items) {
     try {
+      // Get all items if not provided
       const prova = await OBR.scene.items.getItems();
       renderList(prova);
     } catch (e) {
+      // Set up a listener for when the scene is ready
       OBR.scene.onReadyChange(() => {
         OBR.scene.items.getItems().then((items) => {
           renderList(items);
@@ -19,9 +23,11 @@ export const renderList = async (items) => {
     return;
   }
 
+  // Get the element to render the list into
   const element = document.querySelector("#initiative-list");
   const movingNpcs = {};
 
+  // Iterate through the items and collect their metadata
   items.forEach((item) => {
     const paths = item.metadata[`${ID}/path`];
     const moving = item.metadata[`${ID}/moving`];
@@ -35,8 +41,10 @@ export const renderList = async (items) => {
     }
   });
 
+  // Clear the existing content
   element.innerHTML = "";
 
+  // Render each item and its paths
   Object.entries(movingNpcs).forEach(([id, item]) => {
     const itemDiv = createItemDiv(item, id);
     element.appendChild(itemDiv);
@@ -48,6 +56,7 @@ export const renderList = async (items) => {
   });
 };
 
+// Function to create a div for an item
 function createItemDiv(item, id) {
   const itemDiv = document.createElement("div");
   itemDiv.classList.add("item");
@@ -72,6 +81,7 @@ function createItemDiv(item, id) {
   return itemDiv;
 }
 
+// Function to create a wrapper for an item's path
 function createPathWrapper(item, id, pathName) {
   const wrapper = document.createElement("div");
   wrapper.classList.add(`wrapper-${id}`);
@@ -91,6 +101,7 @@ function createPathWrapper(item, id, pathName) {
   const coordsDiv = document.createElement("div");
   coordsDiv.classList.add("coordinates", `${pathName}-${id}`);
 
+  // Render each coordinate in the path
   item.paths[pathName].forEach((coord, index) => {
     const coordDiv = createCoordDiv(coord, id, index, pathName);
     coordsDiv.appendChild(coordDiv);
@@ -106,6 +117,7 @@ function createPathWrapper(item, id, pathName) {
   return wrapper;
 }
 
+// Function to create a div for a coordinate
 function createCoordDiv(coord, id, index, pathName) {
   const coordDiv = document.createElement("div");
   coordDiv.classList.add("coordinate");
@@ -140,6 +152,7 @@ function createCoordDiv(coord, id, index, pathName) {
   return coordDiv;
 }
 
+// Function to create a labeled input element
 function createLabeledInput(labelText, inputElement) {
   const div = document.createElement("div");
   div.classList.add("cell");
@@ -153,6 +166,7 @@ function createLabeledInput(labelText, inputElement) {
   return div;
 }
 
+// Function to create a mouse icon element
 function createMouseIcon(id, index, pathName) {
   const space = document.createElement("div");
   const image = document.createElement("img");
@@ -187,6 +201,7 @@ function createMouseIcon(id, index, pathName) {
   return space;
 }
 
+// Function to create a div for adding/removing coordinates
 function createDivArragment(id, pathName) {
   const divArragment = document.createElement("div");
   divArragment.classList.add("buttonMove");
@@ -219,6 +234,7 @@ function createDivArragment(id, pathName) {
   return divArragment;
 }
 
+// Function to create a div for moving/deleting paths
 function createDivButton(item, id, pathName) {
   const divButton = document.createElement("div");
   divButton.classList.add("buttonMove");
@@ -273,6 +289,7 @@ function createDivButton(item, id, pathName) {
   return divButton;
 }
 
+// Function to toggle the visibility of elements
 function toggleElementsVisibility(event, className) {
   const elems = document.getElementsByClassName(className);
   Array.from(elems).forEach((elem) => {
@@ -281,6 +298,7 @@ function toggleElementsVisibility(event, className) {
   event.target.innerHTML = event.target.innerHTML === "↓" ? "↑" : "↓";
 }
 
+// Function to create an input element
 function createInput(type, value, id, index, pathName) {
   const input = document.createElement("input");
   input.type = "text";
@@ -293,6 +311,7 @@ function createInput(type, value, id, index, pathName) {
   return input;
 }
 
+// Function to handle input changes
 function handleInputChange(event) {
   const input = event.target;
   const { id, index, pathName, type } = input.dataset;
