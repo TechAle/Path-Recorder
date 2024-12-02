@@ -37,22 +37,29 @@ export async function animation(itemId, pathName) {
   const animationInterval = 50;
 
   while (isRunning) {
-    let currentX = path[currentIndex].x;
-    let currentY = path[currentIndex].y;
-    let currentRotation = path[currentIndex].rotation;
-    let nextX = path[(currentIndex + 1) % pathLength].x;
-    let nextY = path[(currentIndex + 1) % pathLength].y;
-    let nextRotation = path[(currentIndex + 1) % pathLength].rotation;
-    let time = path[currentIndex].time;
+    let currentX = parseFloat(path[currentIndex].x);
+    let currentY = parseFloat(path[currentIndex].y);
+    let currentRotation = parseInt(path[currentIndex].rotation);
+    let nextX = parseFloat(path[(currentIndex + 1) % pathLength].x);
+    let nextY = parseFloat(path[(currentIndex + 1) % pathLength].y);
+    let nextRotation = parseInt(path[(currentIndex + 1) % pathLength].rotation);
+    let time = parseInt(path[currentIndex].time);
 
     let steps = time / animationInterval;
     let stepX = (nextX - currentX) / steps;
     let stepY = (nextY - currentY) / steps;
-    let stepRotation = Math.abs(nextRotation - currentRotation) > Math.abs(currentRotation - nextRotation)
-        ? (currentRotation - nextRotation) / steps
-        : (nextRotation - currentRotation) / steps;
+    // Calculate stepRotations
+    // Calculate stepRotation
+    let rotationDifference = nextRotation - currentRotation;
+    if (rotationDifference > 180) {
+      rotationDifference -= 360;
+    } else if (rotationDifference < -180) {
+      rotationDifference += 360;
+    }
+    let stepRotation = rotationDifference / steps;
 
-    let startTime = new Date().getTime();
+
+
 
     for (let j = 0; j < steps; j++) {
       let newX = currentX + stepX * (j + 1);
@@ -74,14 +81,14 @@ export async function animation(itemId, pathName) {
       await new Promise((resolve) => setTimeout(resolve, animationInterval - (stepEndTime - stepStartTime)));
     }
 
-    let endTime = new Date().getTime();
-    console.log(endTime - startTime + " " + time);
+
 
     if (!isRunning) break;
 
     await OBR.scene.local.updateItems([itemId], (items) => {
       let item = items[0];
       item.position = { x: nextX, y: nextY };
+      item.rotation = nextRotation;
       isRunning = item.metadata[`${ID}/moving`] !== undefined;
     });
 
