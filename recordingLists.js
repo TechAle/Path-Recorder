@@ -44,6 +44,9 @@ export const renderList = async (items) => {
   // Clear the existing content
   element.innerHTML = "";
 
+  // Add global buttons
+  element.appendChild(addGlobalButtons())
+
   // Render each item and its paths
   Object.entries(movingNpcs).forEach(([id, item]) => {
     const itemDiv = createItemDiv(item, id);
@@ -55,6 +58,50 @@ export const renderList = async (items) => {
     });
   });
 };
+
+function addGlobalButtons() {
+  const div = document.createElement("div");
+  div.classList.add("buttonMove");
+
+  const buttonStop = document.createElement("button");
+  buttonStop.textContent = "Stop all";
+  buttonStop.addEventListener("click", async () => {
+    const items = await OBR.scene.items.getItems();
+    items.forEach((item) => {
+      if (item.metadata[`${ID}/moving`]) {
+        OBR.scene.items.updateItems([item.id], (items) => {
+          const item = items[0];
+          delete item.metadata[`${ID}/moving`];
+        });
+      }
+    });
+    renderList();
+  });
+  div.appendChild(buttonStop);
+
+  const buttonStartSelected = document.createElement("button");
+  buttonStartSelected.textContent = "Start all";
+  // You have to check for all the checkbox with the class checkboxPlayer, and then start the id
+  buttonStartSelected.addEventListener("click", async () => {
+      const checkboxes = document.getElementsByClassName(`checkboxPlayer`);
+      for (let checkbox of checkboxes) {
+          if (checkbox.checked) {
+            const id = checkbox.id.split("|")[0];
+            const path = checkbox.id.split("|")[1];
+            await OBR.scene.items.updateItems([id], (items) => {
+              const item = items[0];
+              console.log(id)
+              item.metadata[`${ID}/moving`] = {moving: true};
+              animation(item.id, path);
+            });
+          }
+      }
+      renderList();
+  });
+  div.appendChild(buttonStartSelected);
+  return div;
+}
+
 
 // Function to create a div for an item
 function createItemDiv(item, id) {
@@ -88,6 +135,11 @@ function createPathWrapper(item, id, pathName) {
 
   const nameDiv = document.createElement("div");
   nameDiv.textContent = pathName;
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.classList.add("checkboxPlayer");
+  checkbox.id = `${id}|${pathName}`;
+  nameDiv.appendChild(checkbox);
   const spanArrow = document.createElement("span");
   spanArrow.innerHTML = "&#x2193";
   spanArrow.classList.add("buttonToggle");
