@@ -16,6 +16,11 @@ export async function animation(itemId, pathName) {
     await OBR.scene.items.getItems([itemId]).then(async (items) => {
       let item = items[0];
       item.metadata[`${ID}/moving`] = {moving: true};
+      await OBR.scene.items.updateItems([itemId], (items) => {
+        let item = items[0];
+        item.position = { x: item.metadata[`${ID}/path`][pathName][0].x, y: item.metadata[`${ID}/path`][pathName][0].y };
+        item.rotation = item.metadata[`${ID}/path`][pathName][0].rotation;
+      });
       await update((itemNow) => {
         itemNow.position.x = itemNow.metadata[`${ID}/path`][pathName][0].x;
         itemNow.position.y = itemNow.metadata[`${ID}/path`][pathName][0].y;
@@ -39,7 +44,7 @@ export async function animation(itemId, pathName) {
     });
   }
 
-  const animationInterval = 50;
+  const animationInterval = 500;
 
   while (isRunning) {
     let currentX = parseFloat(path[currentIndex].x);
@@ -76,6 +81,7 @@ export async function animation(itemId, pathName) {
       update((item) => {
         item.position = { x: newX, y: newY };
         item.rotation = newRotation;
+        console.log(item.position, item.rotation)
       });
 
       await OBR.scene.items.getItems([itemId]).then((items) => {
@@ -108,7 +114,12 @@ export async function animation(itemId, pathName) {
     });
 
     currentIndex = (currentIndex + 1) % pathLength;
-
+    await OBR.scene.items.updateItems([itemId], (items) => {
+        let item = items[0];
+        item.position = { x: newX, y: newY};
+        item.rotation = newRotation;
+        console.log(newX, newY);
+    });
     stop();
     interaction = await OBR.interaction.startItemInteraction(item);
     [update, stop] = interaction;
