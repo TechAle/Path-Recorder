@@ -3,7 +3,9 @@ import { ID } from "./globalVariables";
 
 export async function animation(itemId, pathName) {
   const globalItems = await OBR.scene.items.getItems([itemId]);
-  await OBR.scene.local.addItems(globalItems);
+  let item = globalItems[0];
+  let interaction = await OBR.interaction.startItemInteraction(item)
+  const [update, stop] = interaction
 
   let pathLength;
   let currentIndex = 0;
@@ -11,11 +13,13 @@ export async function animation(itemId, pathName) {
   let path = [];
 
   while (!isRunning) {
-    await OBR.scene.local.updateItems([itemId], (items) => {
+    await OBR.scene.items.getItems([itemId]).then(async (items) => {
       let item = items[0];
-      item.metadata[`${ID}/moving`] = { moving: true };
-      item.position.x = item.metadata[`${ID}/path`][pathName][0].x;
-      item.position.y = item.metadata[`${ID}/path`][pathName][0].y;
+      item.metadata[`${ID}/moving`] = {moving: true};
+      await update((itemNow) => {
+        itemNow.position.x = itemNow.metadata[`${ID}/path`][pathName][0].x;
+        itemNow.position.y = itemNow.metadata[`${ID}/path`][pathName][0].y;
+      });
       pathLength = item.metadata[`${ID}/path`][pathName].length;
       isRunning = item.metadata[`${ID}/moving`] !== undefined;
 
@@ -29,12 +33,13 @@ export async function animation(itemId, pathName) {
           });
         }
       } else {
-        setTimeout(() => {}, 100);
+        setTimeout(() => {
+        }, 100);
       }
     });
   }
 
-  const animationInterval = 50;
+  const animationInterval = 25;
 
   while (isRunning) {
     let currentX = parseFloat(path[currentIndex].x);
@@ -59,19 +64,21 @@ export async function animation(itemId, pathName) {
     let stepRotation = rotationDifference / steps;
 
 
-
+    let newX, newY, newRotation;
 
     for (let j = 0; j < steps; j++) {
-      let newX = currentX + stepX * (j + 1);
-      let newY = currentY + stepY * (j + 1);
-      let newRotation = currentRotation + stepRotation * (j + 1);
+      newX = currentX + stepX * (j + 1);
+      newY = currentY + stepY * (j + 1);
+      newRotation = currentRotation + stepRotation * (j + 1);
 
       let stepStartTime = new Date().getTime();
 
-      await OBR.scene.local.updateItems([itemId], (items) => {
-        let item = items[0];
+      update((item) => {
         item.position = { x: newX, y: newY };
         item.rotation = newRotation;
+      });
+      await OBR.scene.items.getItems([itemId]).then((items) => {
+        let item = items[0];
         isRunning = item.metadata[`${ID}/moving`] !== undefined;
       });
 
@@ -83,12 +90,19 @@ export async function animation(itemId, pathName) {
 
 
 
-    if (!isRunning) break;
+    if (!isRunning) {
+      await OBR.scene.items.updateItems([itemId], (items) => {
+        let item = items[0];
+        item.position = { x: newX, y: newY};
+        item.rotation = newRotation;
+      }).then(() => {
+        stop()
+      });
+      break;
+    }
 
-    await OBR.scene.local.updateItems([itemId], (items) => {
+    await OBR.scene.items.getItems([itemId]).then((items) => {
       let item = items[0];
-      item.position = { x: nextX, y: nextY };
-      item.rotation = nextRotation;
       isRunning = item.metadata[`${ID}/moving`] !== undefined;
     });
 
