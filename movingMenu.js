@@ -1,9 +1,39 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { ID } from "./globalVariables";
+import OBR, {buildImage} from "@owlbear-rodeo/sdk";
+import {ID} from "./globalVariables";
 
-export async function animation(itemId, pathName) {
+/*
+async function createLocalImageCopy(item) {
+  const newItem = buildImage(
+      {
+        height: item.image.height,
+        width: item.image.width,
+        url: item.image.url,
+        mime: item.image.mime,
+      },
+      { dpi: item.grid.dpi, offset: item.grid.offset }
+  )
+      .build();
+
+  await OBR.scene.local.addItems([newItem])
+  return newItem
+}
+*/
+
+/*
+  This whole system will work with the use of local items.
+  So, when an animation starts the owner send to everyone "startAnimation" with then as a params "itemId" and "pathName"
+  Then the clients are gonna create their local copy of the item and start the animation
+  Said this, when someone log in they will ask "is there anything i need to animate?"
+  And the owner will answer saying if there is or not
+ */
+export async function callAnimation(itemId, pathName) {
   const globalItems = await OBR.scene.items.getItems([itemId]);
-  await OBR.scene.local.addItems(globalItems);
+  await OBR.scene.items.updateItems([itemId], (items) => {
+    let item = items[0];
+    //item.visible = false;
+  });
+  //OBR.broadcast.sendMessage("rodeo.owlbear.example", "Hello, World!");
+  return
 
   let pathLength;
   let currentIndex = 0;

@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { ID } from "./globalVariables";
-import { animation } from "./movingMenu.js";
+import { callAnimation } from "./movingMenu.js";
 
 // Flag to indicate if the user is trying to delete an item
 let tryingDelete = false;
@@ -92,7 +92,7 @@ function addGlobalButtons() {
               const item = items[0];
               console.log(id)
               item.metadata[`${ID}/moving`] = {moving: true};
-              animation(item.id, path);
+              callAnimation(item.id, path);
             });
           }
       }
@@ -305,7 +305,7 @@ function createDivButton(item, id, pathName) {
       OBR.scene.items.updateItems([id], (items) => {
         const item = items[0];
         item.metadata[`${ID}/moving`] = { moving: true };
-        animation(id, pathName);
+        callAnimation(id, pathName);
       });
     }
     event.target.moving = !event.target.moving;
