@@ -1,7 +1,8 @@
 import OBR, {buildImage} from "@owlbear-rodeo/sdk";
-import {ID} from "./globalVariables";
+import {ID, signals} from "./globalVariables";
 
-/*
+let memoryMoving = {}
+
 async function createLocalImageCopy(item) {
   const newItem = buildImage(
       {
@@ -11,28 +12,32 @@ async function createLocalImageCopy(item) {
         mime: item.image.mime,
       },
       { dpi: item.grid.dpi, offset: item.grid.offset }
+  ).position(
+        item.position
+    ).rotation(
+        item.rotation
+    ).scale(
+        item.scale
   )
       .build();
 
   await OBR.scene.local.addItems([newItem])
-  return newItem
+  memoryMoving[item.id] = newItem.id
+  return newItem.id
 }
-*/
 
-/*
-  This whole system will work with the use of local items.
-  So, when an animation starts the owner send to everyone "startAnimation" with then as a params "itemId" and "pathName"
-  Then the clients are gonna create their local copy of the item and start the animation
-  Said this, when someone log in they will ask "is there anything i need to animate?"
-  And the owner will answer saying if there is or not
- */
-export async function callAnimation(itemId, pathName) {
-  const globalItems = await OBR.scene.items.getItems([itemId]);
-  await OBR.scene.items.updateItems([itemId], (items) => {
-    let item = items[0];
-    //item.visible = false;
-  });
-  //OBR.broadcast.sendMessage("rodeo.owlbear.example", "Hello, World!");
+
+OBR.onReady( () => {
+    OBR.broadcast.onMessage(signals.startAnimating, async (message) => {
+        console.log(message.data);
+        startAnimation(message.data.globalItems, message.data.pathName);
+    });
+});
+
+async function startAnimation(itemObject, pathName) {
+  console.log("test")
+  let itemId = await createLocalImageCopy(itemObject);
+  console.log(itemId)
   return
 
   let pathLength;
@@ -40,10 +45,11 @@ export async function callAnimation(itemId, pathName) {
   let isRunning = false;
   let path = [];
 
+  /*
   while (!isRunning) {
     await OBR.scene.local.updateItems([itemId], (items) => {
       let item = items[0];
-      item.metadata[`${ID}/moving`] = { moving: true };
+      item.metadata[`${ID}/moving`] = {moving: true};
       item.position.x = item.metadata[`${ID}/path`][pathName][0].x;
       item.position.y = item.metadata[`${ID}/path`][pathName][0].y;
       pathLength = item.metadata[`${ID}/path`][pathName].length;
@@ -59,10 +65,11 @@ export async function callAnimation(itemId, pathName) {
           });
         }
       } else {
-        setTimeout(() => {}, 100);
+        setTimeout(() => {
+        }, 100);
       }
     });
-  }
+  }*/
 
   const animationInterval = 50;
 
@@ -89,8 +96,6 @@ export async function callAnimation(itemId, pathName) {
     let stepRotation = rotationDifference / steps;
 
 
-
-
     for (let j = 0; j < steps; j++) {
       let newX = currentX + stepX * (j + 1);
       let newY = currentY + stepY * (j + 1);
@@ -100,7 +105,7 @@ export async function callAnimation(itemId, pathName) {
 
       await OBR.scene.local.updateItems([itemId], (items) => {
         let item = items[0];
-        item.position = { x: newX, y: newY };
+        item.position = {x: newX, y: newY};
         item.rotation = newRotation;
         isRunning = item.metadata[`${ID}/moving`] !== undefined;
       });
@@ -112,16 +117,32 @@ export async function callAnimation(itemId, pathName) {
     }
 
 
-
     if (!isRunning) break;
 
     await OBR.scene.local.updateItems([itemId], (items) => {
       let item = items[0];
-      item.position = { x: nextX, y: nextY };
+      item.position = {x: nextX, y: nextY};
       item.rotation = nextRotation;
       isRunning = item.metadata[`${ID}/moving`] !== undefined;
     });
 
     currentIndex = (currentIndex + 1) % pathLength;
   }
+}
+
+/*
+  This whole system will work with the use of local items.
+  So, when an animation starts the owner send to everyone "startAnimation" with then as a params "itemId" and "pathName"
+  Then the clients are gonna create their local copy of the item and start the animation
+  Said this, when someone log in they will ask "is there anything i need to animate?"
+  And the owner will answer saying if there is or not
+ */
+export async function callAnimation(itemId, pathName) {
+  let globalItems = await OBR.scene.items.getItems([itemId]);
+  await OBR.scene.items.updateItems([itemId], (items) => {
+    let item = items[0];
+    //item.visible = false;
+  });
+  globalItems = globalItems[0];
+  await OBR.broadcast.sendMessage(signals.startAnimating, { globalItems, pathName }, {destination: "ALL"});
 }

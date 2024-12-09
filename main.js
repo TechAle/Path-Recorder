@@ -3,6 +3,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { setupRecordingMenu } from "./recordingMenu.js";
 import { renderList } from "./recordingLists.js";
 import { setupOnItemEvent } from "./onItemEvent";
+import {signals} from "./globalVariables.js";
 
 
 document.querySelector("#app").innerHTML = `
