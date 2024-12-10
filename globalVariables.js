@@ -6,3 +6,4 @@ export const signals = Object.freeze({
     joined: "joined",
     reasume: "reasume"
 })
+export let memoryMoving = {}

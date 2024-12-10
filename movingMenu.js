@@ -1,7 +1,6 @@
 import OBR, {buildImage} from "@owlbear-rodeo/sdk";
-import {ID, signals} from "./globalVariables";
+import {ID, signals, memoryMoving} from "./globalVariables";
 
-let memoryMoving = {}
 
 async function createLocalImageCopy(item) {
   const newItem = buildImage(
@@ -23,6 +22,7 @@ async function createLocalImageCopy(item) {
 
   await OBR.scene.local.addItems([newItem])
   memoryMoving[item.id] = newItem.id
+  console.log(memoryMoving)
   return newItem.id
 }
 
@@ -32,48 +32,41 @@ OBR.onReady( () => {
         console.log(message.data);
         startAnimation(message.data.globalItems, message.data.pathName);
     });
+
+    OBR.broadcast.onMessage(signals.stopAnimating, async (message) => {
+      delete memoryMoving[message.data.itemId]
+      console.log(memoryMoving)
+    });
 });
 
 async function startAnimation(itemObject, pathName) {
   console.log("test")
   let itemId = await createLocalImageCopy(itemObject);
-  console.log(itemId)
-  return
 
   let pathLength;
   let currentIndex = 0;
-  let isRunning = false;
   let path = [];
 
-  /*
-  while (!isRunning) {
-    await OBR.scene.local.updateItems([itemId], (items) => {
-      let item = items[0];
-      item.metadata[`${ID}/moving`] = {moving: true};
-      item.position.x = item.metadata[`${ID}/path`][pathName][0].x;
-      item.position.y = item.metadata[`${ID}/path`][pathName][0].y;
-      pathLength = item.metadata[`${ID}/path`][pathName].length;
-      isRunning = item.metadata[`${ID}/moving`] !== undefined;
 
-      if (isRunning) {
-        for (let i = 0; i < pathLength; i++) {
-          path.push({
-            x: item.metadata[`${ID}/path`][pathName][i].x,
-            y: item.metadata[`${ID}/path`][pathName][i].y,
-            rotation: item.metadata[`${ID}/path`][pathName][i].rotation,
-            time: item.metadata[`${ID}/path`][pathName][i].time,
-          });
-        }
-      } else {
-        setTimeout(() => {
-        }, 100);
-      }
-    });
-  }*/
+  await OBR.scene.local.updateItems([itemId], (items) => {
+    let item = items[0];
+    console.log(item)
+    item.position.x = itemObject.metadata[`${ID}/path`][pathName][0].x;
+    item.position.y = itemObject.metadata[`${ID}/path`][pathName][0].y;
+    pathLength = itemObject.metadata[`${ID}/path`][pathName].length;
+    for (let i = 0; i < pathLength; i++) {
+      path.push({
+        x: itemObject.metadata[`${ID}/path`][pathName][i].x,
+        y: itemObject.metadata[`${ID}/path`][pathName][i].y,
+        rotation: itemObject.metadata[`${ID}/path`][pathName][i].rotation,
+        time: itemObject.metadata[`${ID}/path`][pathName][i].time,
+      });
+    }
+  });
 
   const animationInterval = 50;
 
-  while (isRunning) {
+  while (memoryMoving[itemObject.id]) {
     let currentX = parseFloat(path[currentIndex].x);
     let currentY = parseFloat(path[currentIndex].y);
     let currentRotation = parseInt(path[currentIndex].rotation);
@@ -97,6 +90,9 @@ async function startAnimation(itemObject, pathName) {
 
 
     for (let j = 0; j < steps; j++) {
+      if (!memoryMoving[itemObject.id]) {
+        break
+      }
       let newX = currentX + stepX * (j + 1);
       let newY = currentY + stepY * (j + 1);
       let newRotation = currentRotation + stepRotation * (j + 1);
@@ -107,27 +103,30 @@ async function startAnimation(itemObject, pathName) {
         let item = items[0];
         item.position = {x: newX, y: newY};
         item.rotation = newRotation;
-        isRunning = item.metadata[`${ID}/moving`] !== undefined;
       });
-
-      if (!isRunning) break;
 
       let stepEndTime = new Date().getTime();
       await new Promise((resolve) => setTimeout(resolve, animationInterval - (stepEndTime - stepStartTime)));
+
+      if (!memoryMoving[itemObject.id]) {
+        break
+      }
     }
 
-
-    if (!isRunning) break;
+    if (!memoryMoving[itemObject.id]) {
+      break
+    }
 
     await OBR.scene.local.updateItems([itemId], (items) => {
       let item = items[0];
       item.position = {x: nextX, y: nextY};
       item.rotation = nextRotation;
-      isRunning = item.metadata[`${ID}/moving`] !== undefined;
     });
 
     currentIndex = (currentIndex + 1) % pathLength;
   }
+
+  await OBR.scene.local.deleteItems([itemId]);
 }
 
 /*
@@ -145,4 +144,22 @@ export async function callAnimation(itemId, pathName) {
   });
   globalItems = globalItems[0];
   await OBR.broadcast.sendMessage(signals.startAnimating, { globalItems, pathName }, {destination: "ALL"});
+}
+
+export async function stopAnimation(itemId) {
+  let coords = {x: 0, y:0}
+  await OBR.scene.local.updateItems([memoryMoving[itemId]], (items) => {
+    let item = items[0];
+    // Stupid proxies
+    coords = {
+        x: item.position.x,
+        y: item.position.y
+    }
+  });
+  await OBR.scene.items.updateItems([itemId],  (items) => {
+    let item = items[0];
+    item.visible = true;
+    item.position = coords
+  });
+  await OBR.broadcast.sendMessage(signals.stopAnimating, {itemId}, {destination: "ALL"});
 }
