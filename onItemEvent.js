@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import {ID, pathCreations} from "./globalVariables";
+import {startAnimation} from "./movingMenu";
 
 let idValues = {}
 
@@ -12,6 +13,33 @@ export function setupOnItemEvent() {
                 x: item.position.x,
                 y: item.position.y,
                 rotation: item.rotation
+            }
+            if (item.metadata[`${ID}/moving`]) {
+                console.log("Test")
+                let copy = {
+                    position: {
+                        x: item.position.x,
+                        y: item.position.y
+                    },
+                    rotation: item.rotation,
+                    scale: item.scale,
+                    image: {
+                        height: item.image.height,
+                        width: item.image.width,
+                        url: item.image.url,
+                        mime: item.image.mime,
+                    },
+                    grid: {
+                        dpi: item.grid.dpi,
+                        offset: item.grid.offset
+                    },
+                    metadata : {
+                        [`${ID}/path`] : {
+                            [item.metadata[`${ID}/moving`]["moving"]] : item.metadata[`${ID}/path`][item.metadata[`${ID}/moving`]["moving"]]
+                        }
+                    }
+                }
+                startAnimation(copy, item.metadata[`${ID}/moving`]["moving"])
             }
         }
     });

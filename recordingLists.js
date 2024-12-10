@@ -91,7 +91,7 @@ function addGlobalButtons() {
             await OBR.scene.items.updateItems([id], (items) => {
               const item = items[0];
               console.log(id)
-              item.metadata[`${ID}/moving`] = {moving: true};
+              item.metadata[`${ID}/moving`] = {moving: path};
               callAnimation(item.id, path);
             });
           }
@@ -301,7 +301,7 @@ function createDivButton(item, id, pathName) {
     } else {
       OBR.scene.items.updateItems([id], (items) => {
         const item = items[0];
-        item.metadata[`${ID}/moving`] = { moving: true };
+        item.metadata[`${ID}/moving`] = { moving: pathName };
         callAnimation(id, pathName);
       });
     }

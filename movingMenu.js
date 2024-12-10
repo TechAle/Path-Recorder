@@ -39,8 +39,7 @@ OBR.onReady( () => {
     });
 });
 
-async function startAnimation(itemObject, pathName) {
-  console.log("test")
+export async function startAnimation(itemObject, pathName) {
   let itemId = await createLocalImageCopy(itemObject);
 
   let pathLength;
@@ -65,6 +64,7 @@ async function startAnimation(itemObject, pathName) {
   });
 
   const animationInterval = 50;
+  let first = true;
 
   while (memoryMoving[itemObject.id]) {
     let currentX = parseFloat(path[currentIndex].x);
@@ -106,7 +106,16 @@ async function startAnimation(itemObject, pathName) {
       });
 
       let stepEndTime = new Date().getTime();
-      await new Promise((resolve) => setTimeout(resolve, animationInterval - (stepEndTime - stepStartTime)));
+      let waitTime = animationInterval - (stepEndTime - stepStartTime);
+      console.log("Theory wait: " + waitTime);
+      let testStart = new Date().getTime();
+      if (first) {
+        first = false;
+        waitTime = 0;
+      }
+      await new Promise((resolve) => setTimeout(resolve, waitTime ));
+      let testEnd = new Date().getTime();
+      console.log("Actual wait: " + (testEnd - testStart));
 
       if (!memoryMoving[itemObject.id]) {
         break
@@ -140,7 +149,7 @@ export async function callAnimation(itemId, pathName) {
   let globalItems = await OBR.scene.items.getItems([itemId]);
   await OBR.scene.items.updateItems([itemId], (items) => {
     let item = items[0];
-    //item.visible = false;
+    item.visible = false;
   });
   globalItems = globalItems[0];
   await OBR.broadcast.sendMessage(signals.startAnimating, { globalItems, pathName }, {destination: "ALL"});
