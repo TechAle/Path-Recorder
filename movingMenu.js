@@ -107,16 +107,13 @@ export async function startAnimation(itemObject, pathName) {
 
       let stepEndTime = new Date().getTime();
       let waitTime = animationInterval - (stepEndTime - stepStartTime);
-      console.log("Theory wait: " + waitTime);
-      let testStart = new Date().getTime();
-      if (first) {
-        first = false;
-        waitTime = 0;
+      let startTime = new Date().getTime();
+      let endTime = new Date().getTime() + waitTime;
+      // I know this is the worst way to do this, but timeout has problems
+      // When the tab is not active
+      while (startTime <= endTime) {
+        startTime = new Date().getTime();
       }
-      await new Promise((resolve) => setTimeout(resolve, waitTime ));
-      let testEnd = new Date().getTime();
-      console.log("Actual wait: " + (testEnd - testStart));
-
       if (!memoryMoving[itemObject.id]) {
         break
       }

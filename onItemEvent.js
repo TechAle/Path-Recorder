@@ -21,6 +21,7 @@ export function setupOnItemEvent() {
                         x: item.position.x,
                         y: item.position.y
                     },
+                    id: item.id,
                     rotation: item.rotation,
                     scale: item.scale,
                     image: {
