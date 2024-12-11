@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Path to the JSON file
+MANIFEST_FILE="./public/manifest.json"
+
+# Get the commit hash
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "temp-hash")
+
+# Temporary file to store the updated contents
+TEMP_FILE=$(mktemp)
+
+# Read the file line by line
+while IFS= read -r line; do
+    # Check if the line contains the "version" field
+    if [[ "$line" =~ \"version\":\ \"([0-9]+\.[0-9]+)[^\"]*\" ]]; then
+        # Extract the version number and append the commit hash
+        version="${BASH_REMATCH[1]}"
+        line="  \"version\": \"$version-$COMMIT_HASH\","
+    fi
+    # Write the line to the temporary file
+    echo "$line" >> "$TEMP_FILE"
+done < "$MANIFEST_FILE"
+
+# Replace the original file with the modified file
+mv "$TEMP_FILE" "$MANIFEST_FILE"
+
+# Optional: Print the modified file to verify the changes
+cat "$MANIFEST_FILE"
+
+git add "$MANIFEST_FILE"
