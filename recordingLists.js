@@ -67,14 +67,11 @@ function addGlobalButtons() {
   buttonStop.textContent = "Stop all";
   buttonStop.addEventListener("click", async () => {
     const items = await OBR.scene.items.getItems();
-    items.forEach((item) => {
+    for (const item of items) {
       if (item.metadata[`${ID}/moving`]) {
-        OBR.scene.items.updateItems([item.id], (items) => {
-          const item = items[0];
-          delete item.metadata[`${ID}/moving`];
-        });
+        await stopAnimation(item.id);
       }
-    });
+    }
     renderList();
   });
   div.appendChild(buttonStop);

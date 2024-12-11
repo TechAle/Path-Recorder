@@ -165,7 +165,8 @@ export async function stopAnimation(itemId) {
   await OBR.scene.items.updateItems([itemId],  (items) => {
     let item = items[0];
     item.visible = true;
-    item.position = coords
+    item.position = coords;
+    delete item.metadata[`${ID}/moving`]
   });
   await OBR.broadcast.sendMessage(signals.stopAnimating, {itemId}, {destination: "ALL"});
 }
