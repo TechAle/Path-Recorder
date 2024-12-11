@@ -1,9 +1,11 @@
 {
-  "name": "Initiative Tracker",
+  "name": "Path recorder",
   "version": "1.0.0",
+  "author": "Alessandro Condello",
+  "description": "Allow your npcs to become alive and walk around your world!",
   "manifest_version": 1,
   "action": {
-    "title": "Initiative Tracker",
+    "title": "Path recorder",
     "icon": "/icon.svg",
     "popover": "/",
     "height": 600,
