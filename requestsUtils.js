@@ -4,7 +4,7 @@ export async function retryApiLimit(asyncTask) {
             await asyncTask();
             break; // Exit the loop if the task succeeds
         } catch (e) {
-            if (e.message !== "RateLimitHit") {
+            if (e.error.name !== "RateLimitHit") {
                 throw e; // Rethrow if the error is not a rate limit error
             }
             // Optionally add a small delay to avoid immediate retry
