@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { ID } from "./globalVariables";
-import {callAnimation, callAnimations, stopAnimation} from "./movingMenu.js";
+import {callAnimation, callAnimations, stopAnimation, stopAnimations} from "./movingMenu.js";
 
 // Flag to indicate if the user is trying to delete an item
 let tryingDelete = false;
@@ -67,12 +67,15 @@ function addGlobalButtons() {
   buttonStop.textContent = "Stop selected";
   buttonStop.addEventListener("click", async () => {
     const items = await OBR.scene.items.getItems();
+    let toSend = []
     for (const item of items) {
       if (item.metadata[`${ID}/moving`]) {
-        await stopAnimation(item.id);
+        toSend.push(item.id);
       }
     }
-    renderList();
+    await stopAnimations(toSend).then(() => {
+      renderList();
+    });
   });
   div.appendChild(buttonStop);
 

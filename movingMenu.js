@@ -159,6 +159,12 @@ export async function callAnimations(items) {
   }
 }
 
+export async function stopAnimations(items) {
+  for(let item in items) {
+    await stopAnimation(items[item][0], items[item][1])
+  }
+}
+
 export async function stopAnimation(itemId) {
   let coords = {x: 0, y:0}
   await OBR.scene.local.updateItems([memoryMoving[itemId]], (items) => {
