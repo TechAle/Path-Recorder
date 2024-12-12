@@ -143,6 +143,7 @@ export async function startAnimation(itemObject, pathName) {
   And the owner will answer saying if there is or not
  */
 export async function callAnimation(itemId, pathName) {
+  console.log(itemId, pathName)
   let globalItems = await OBR.scene.items.getItems([itemId]);
   await OBR.scene.items.updateItems([itemId], (items) => {
     let item = items[0];
@@ -150,6 +151,12 @@ export async function callAnimation(itemId, pathName) {
   });
   globalItems = globalItems[0];
   await OBR.broadcast.sendMessage(signals.startAnimating, { globalItems, pathName }, {destination: "ALL"});
+}
+
+export async function callAnimations(items) {
+  for(let item in items) {
+    await callAnimation(items[item][0], items[item][1])
+  }
 }
 
 export async function stopAnimation(itemId) {

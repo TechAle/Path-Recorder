@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { ID } from "./globalVariables";
-import {callAnimation, stopAnimation} from "./movingMenu.js";
+import {callAnimation, callAnimations, stopAnimation} from "./movingMenu.js";
 
 // Flag to indicate if the user is trying to delete an item
 let tryingDelete = false;
@@ -64,7 +64,7 @@ function addGlobalButtons() {
   div.classList.add("buttonMove");
 
   const buttonStop = document.createElement("button");
-  buttonStop.textContent = "Stop all";
+  buttonStop.textContent = "Stop selected";
   buttonStop.addEventListener("click", async () => {
     const items = await OBR.scene.items.getItems();
     for (const item of items) {
@@ -77,23 +77,27 @@ function addGlobalButtons() {
   div.appendChild(buttonStop);
 
   const buttonStartSelected = document.createElement("button");
-  buttonStartSelected.textContent = "Start all";
+  buttonStartSelected.textContent = "Start selected";
   // You have to check for all the checkbox with the class checkboxPlayer, and then start the id
   buttonStartSelected.addEventListener("click", async () => {
       const checkboxes = document.getElementsByClassName(`checkboxPlayer`);
+      let toSend = []
       for (let checkbox of checkboxes) {
           if (checkbox.checked) {
             const id = checkbox.id.split("|")[0];
-            const path = checkbox.id.split("|")[1];
+            const pathName = checkbox.id.split("|")[1];
             await OBR.scene.items.updateItems([id], (items) => {
               const item = items[0];
               console.log(id)
-              item.metadata[`${ID}/moving`] = {moving: path};
-              callAnimation(item.id, path);
+              item.metadata[`${ID}/moving`] = {moving: pathName};
+
+              toSend.push([item.id, pathName]);
             });
           }
       }
+    callAnimations(toSend).then(() => {
       renderList();
+    })
   });
   div.appendChild(buttonStartSelected);
   return div;
