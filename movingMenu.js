@@ -1,5 +1,6 @@
 import OBR, {buildImage} from "@owlbear-rodeo/sdk";
 import {ID, signals, memoryMoving} from "./globalVariables";
+import {retryApiLimit} from "./requestsUtils.js";
 
 
 async function createLocalImageCopy(item) {
@@ -145,12 +146,16 @@ export async function startAnimation(itemObject, pathName) {
 export async function callAnimation(itemId, pathName) {
   console.log(itemId, pathName)
   let globalItems = await OBR.scene.items.getItems([itemId]);
-  await OBR.scene.items.updateItems([itemId], (items) => {
-    let item = items[0];
-    item.visible = false;
+  await retryApiLimit(async () => {
+    await OBR.scene.items.updateItems([itemId], (items) => {
+      let item = items[0];
+      item.visible = false;
+    });
   });
   globalItems = globalItems[0];
-  await OBR.broadcast.sendMessage(signals.startAnimating, { globalItems, pathName }, {destination: "ALL"});
+  await retryApiLimit(async () => {
+    await OBR.broadcast.sendMessage(signals.startAnimating, { globalItems, pathName }, {destination: "ALL"});
+  });
 }
 
 export async function callAnimations(items) {
@@ -161,12 +166,13 @@ export async function callAnimations(items) {
 
 export async function stopAnimations(items) {
   for(let item in items) {
-    await stopAnimation(items[item][0], items[item][1])
+    await stopAnimation(items[item])
   }
 }
 
 export async function stopAnimation(itemId) {
   let coords = {x: 0, y:0}
+  console.log(itemId)
   await OBR.scene.local.updateItems([memoryMoving[itemId]], (items) => {
     let item = items[0];
     // Stupid proxies
@@ -175,11 +181,15 @@ export async function stopAnimation(itemId) {
         y: item.position.y
     }
   });
-  await OBR.scene.items.updateItems([itemId],  (items) => {
-    let item = items[0];
-    item.visible = true;
-    item.position = coords;
-    delete item.metadata[`${ID}/moving`]
-  });
-  await OBR.broadcast.sendMessage(signals.stopAnimating, {itemId}, {destination: "ALL"});
+  await retryApiLimit(async () => {
+    await OBR.scene.items.updateItems([itemId], (items) => {
+      let item = items[0];
+      item.visible = true;
+      item.position = coords;
+      delete item.metadata[`${ID}/moving`]
+    });
+  })
+  await retryApiLimit(async () => {
+    await OBR.broadcast.sendMessage(signals.stopAnimating, {itemId}, {destination: "ALL"});
+  })
 }
